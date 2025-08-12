@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Task } from "../../types/types";
 import { useDispatch, useSelector } from "react-redux";
 import { setTasks } from "../../features/taskSlice";
-import { RootState } from "../../store";
+import { RootState } from "../../store/index";
 import { getLocalStorage, setLocalStorage } from "../../utils/localStorage";
 
 const TaskForm = () => {
