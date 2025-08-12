@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 import { Task as TaskType } from "../../types/types";
 import Task from "../Task/Task";
-
+import { useDispatch } from "react-redux";
+import { deleteTask, updateTask } from "../../features/taskSlice";
 interface TaskListProps {
   tasks: TaskType[];
 }
 
 const TaskList = ({ tasks }: TaskListProps) => {
   const [sortBy, setSortBy] = useState<string>("dueDate");
-
+  const dispatch = useDispatch();
   // Sort the tasks array based on the selected criteria
   const sortedTasks = [...tasks].sort((a, b) => {
     switch (sortBy) {
@@ -24,10 +25,41 @@ const TaskList = ({ tasks }: TaskListProps) => {
     }
   });
 
+  const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
+
+  const toggleTaskSelection = (id: string) => {
+    setSelectedTasks((prev) =>
+      prev.includes(id) ? prev.filter((taskId) => taskId !== id) : [...prev, id]
+    );
+  };
+
+  const selectAll = () => {
+    if (selectedTasks.length === sortedTasks.length) {
+      setSelectedTasks([]); // Deselect all
+    } else {
+      setSelectedTasks(sortedTasks.map((t) => t.id)); // Select all
+    }
+  };
+  const handleBulkDelete = () => {
+    if (window.confirm("Delete selected tasks?")) {
+      selectedTasks.forEach((id) => dispatch(deleteTask(id)));
+      setSelectedTasks([]);
+    }
+  };
+
+  const handleBulkToggleCompletion = () => {
+    selectedTasks.forEach((id) => {
+      const task = tasks.find((t) => t.id === id);
+      if (task) {
+        dispatch(updateTask({ ...task, completed: !task.completed }));
+      }
+    });
+    setSelectedTasks([]);
+  };
+
   return (
     <div>
-      {/* Sorting options */}
-      <div className="mt-4 mb-4">
+      <div className="mt-4 mb-4 flex space-x-2">
         <label htmlFor="sort" className="mr-2 font-semibold">
           Sort by:
         </label>
@@ -41,11 +73,35 @@ const TaskList = ({ tasks }: TaskListProps) => {
           <option value="priority">Priority</option>
           <option value="completed">Completion</option>
         </select>
+        <button
+          onClick={selectAll}
+          className="bg-gray-300 text-white px-3 py-1 rounded"
+        >
+          {selectedTasks.length === sortedTasks.length
+            ? "Deselect All"
+            : "Select All"}
+        </button>
+        <button
+          onClick={handleBulkToggleCompletion}
+          className="bg-blue-500 text-white px-3 py-1 rounded"
+        >
+          Toggle Complete
+        </button>
+        <button
+          onClick={handleBulkDelete}
+          className="bg-red-500 text-white px-3 py-1 rounded"
+        >
+          Delete Selected
+        </button>
       </div>
 
-      {/* Render sorted tasks */}
       {sortedTasks.map((task) => (
-        <Task key={task.id} task={task} />
+        <Task
+          key={task.id}
+          task={task}
+          isSelected={selectedTasks.includes(task.id)}
+          onSelect={() => toggleTaskSelection(task.id)}
+        />
       ))}
     </div>
   );

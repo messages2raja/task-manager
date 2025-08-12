@@ -6,6 +6,7 @@ import TaskList from "./TaskList";
 import tasksReducer from "../../features/taskSlice";
 import { Task } from "../../types/types";
 import "@testing-library/jest-dom";
+
 const tasks: Task[] = [
   {
     id: "1",
@@ -25,14 +26,19 @@ const tasks: Task[] = [
   },
 ];
 
-const store = configureStore({
-  reducer: {
-    tasks: tasksReducer,
-  },
-});
-
 const renderWithProvider = (ui: React.ReactElement) => {
-  return render(<Provider store={store}>{ui}</Provider>);
+  const store = configureStore({
+    reducer: {
+      tasks: tasksReducer,
+    },
+    preloadedState: {
+      tasks: {
+        tasks: tasks,
+      },
+    },
+  });
+  const utils = render(<Provider store={store}>{ui}</Provider>);
+  return { store, ...utils };
 };
 
 describe("TaskList", () => {
@@ -44,9 +50,7 @@ describe("TaskList", () => {
 
   test("sorts by due date by default", () => {
     renderWithProvider(<TaskList tasks={tasks} />);
-    const taskTitles = screen.getAllByRole("heading"); // or use another selector depending on your Task component markup
-
-    // The first task should be Task B (due earlier on 2025-08-18)
+    const taskTitles = screen.getAllByRole("heading");
     expect(taskTitles[0]).toHaveTextContent("Task B");
   });
 
@@ -56,9 +60,6 @@ describe("TaskList", () => {
       target: { value: "priority" },
     });
     const taskTitles = screen.getAllByRole("heading");
-
-    // Task A has priority Low(1), Task B High(3)
-    // So with ascending sort, Task A should be first
     expect(taskTitles[0]).toHaveTextContent("Task A");
   });
 
@@ -68,9 +69,33 @@ describe("TaskList", () => {
       target: { value: "completed" },
     });
     const taskTitles = screen.getAllByRole("heading");
-
-    // Task A is incomplete (false), Task B is completed (true)
-    // Sorting by completion ascending means incomplete tasks first, so Task A first
     expect(taskTitles[0]).toHaveTextContent("Task A");
+  });
+
+  test("selects multiple tasks and toggles completion", () => {
+    const { store } = renderWithProvider(<TaskList tasks={tasks} />);
+
+    fireEvent.click(screen.getByLabelText(/Select task Task A/i));
+    fireEvent.click(screen.getByLabelText(/Select task Task B/i));
+
+    fireEvent.click(screen.getByText(/Toggle Complete/i));
+
+    const actions = store.getState().tasks.tasks;
+    expect(actions.find((t) => t.id === "1")?.completed).toBe(true);
+    expect(actions.find((t) => t.id === "2")?.completed).toBe(false);
+  });
+
+  test("deletes selected tasks", () => {
+    const { store } = renderWithProvider(<TaskList tasks={tasks} />);
+
+    jest.spyOn(window, "confirm").mockReturnValueOnce(true);
+
+    fireEvent.click(screen.getByLabelText(/Select task Task A/i));
+
+    fireEvent.click(screen.getByText(/Delete Selected/i));
+
+    const remainingTasks = store.getState().tasks.tasks;
+    expect(remainingTasks).toHaveLength(1);
+    expect(remainingTasks[0].id).toBe("2");
   });
 });

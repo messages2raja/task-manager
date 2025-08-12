@@ -5,9 +5,11 @@ import { deleteTask, updateTask } from "../../features/taskSlice";
 
 interface TaskProps {
   task: TaskType;
+  isSelected: boolean;
+  onSelect: () => void;
 }
 
-const Task: React.FC<TaskProps> = ({ task }: TaskProps) => {
+const Task = ({ task, isSelected, onSelect }: TaskProps) => {
   const dispatch = useDispatch();
 
   const handleToggleCompletion = () => {
@@ -22,19 +24,29 @@ const Task: React.FC<TaskProps> = ({ task }: TaskProps) => {
 
   return (
     <div className="flex justify-between items-center p-4 border-b">
-      <div>
-        <h3
-          className={`font-bold ${
-            task.completed ? "line-through text-gray-500" : ""
-          }`}
-        >
-          {task.title}
-        </h3>
-        <p className="text-sm text-gray-600">{task.description}</p>
-        <p className="text-xs text-gray-400">
-          {task.priority} | Due: {task.dueDate}
-        </p>
+      <div className="flex items-center space-x-3">
+        <input
+          type="checkbox"
+          aria-label={`Select task ${task.title}`}
+          checked={isSelected}
+          onChange={onSelect}
+          className="h-4 h-6 w-6 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+        />
+        <div>
+          <h3
+            className={`font-bold ${
+              task.completed ? "line-through text-gray-500" : ""
+            }`}
+          >
+            {task.title}
+          </h3>
+          <p className="text-sm text-gray-600">{task.description}</p>
+          <p className="text-xs text-gray-400">
+            {task.priority} | Due: {task.dueDate}
+          </p>
+        </div>
       </div>
+
       <div className="flex space-x-2">
         <button
           onClick={handleToggleCompletion}

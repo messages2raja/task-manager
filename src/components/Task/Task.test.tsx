@@ -5,6 +5,7 @@ import { useDispatch } from "react-redux";
 import { deleteTask, updateTask } from "../../features/taskSlice";
 import { Task as TaskType } from "../../types/types";
 import "@testing-library/jest-dom";
+
 // Mock react-redux
 jest.mock("react-redux", () => ({
   useDispatch: jest.fn(),
@@ -29,13 +30,13 @@ describe("Task component without Provider", () => {
   });
 
   test("renders task details", () => {
-    render(<Task task={mockTask} />);
+    render(<Task task={mockTask} isSelected={false} onSelect={jest.fn()} />);
     expect(screen.getByText("Test Task")).toBeInTheDocument();
     expect(screen.getByText("Test Description")).toBeInTheDocument();
   });
 
   test("dispatches updateTask on complete button click", () => {
-    render(<Task task={mockTask} />);
+    render(<Task task={mockTask} isSelected={false} onSelect={jest.fn()} />);
     fireEvent.click(screen.getByText("Complete"));
     expect(mockDispatch).toHaveBeenCalledWith(
       updateTask({ ...mockTask, completed: true })
@@ -44,14 +45,14 @@ describe("Task component without Provider", () => {
 
   test("dispatches deleteTask on delete button click when confirmed", () => {
     jest.spyOn(window, "confirm").mockReturnValue(true);
-    render(<Task task={mockTask} />);
+    render(<Task task={mockTask} isSelected={false} onSelect={jest.fn()} />);
     fireEvent.click(screen.getByText("Delete"));
     expect(mockDispatch).toHaveBeenCalledWith(deleteTask(mockTask.id));
   });
 
   test("does not dispatch deleteTask when cancelled", () => {
     jest.spyOn(window, "confirm").mockReturnValue(false);
-    render(<Task task={mockTask} />);
+    render(<Task task={mockTask} isSelected={false} onSelect={jest.fn()} />);
     fireEvent.click(screen.getByText("Delete"));
     expect(mockDispatch).not.toHaveBeenCalled();
   });
